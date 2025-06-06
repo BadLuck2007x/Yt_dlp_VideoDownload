@@ -1,6 +1,5 @@
 from urllib.parse import urlparse, parse_qs
 import yt_dlp
-import time
 import os
 
 
@@ -13,17 +12,14 @@ def clear_console()->None:
 
 class Downloader:
     def __init__(self, urls):
-        downloads_path = os.path.join(os.path.expanduser("~"), "Downloads")
-        outtmpl_path = os.path.join(downloads_path, '%(title)s.%(ext)s')
+        self.downloads_path = os.path.join(os.path.expanduser("~"), "Downloads/Yt-dlp-media")
+        outtmpl_path = os.path.join(self.downloads_path, '%(title)s.%(ext)s')
         self.urls = urls
         self.format = {
                 'format': 'best',
                 'outtmpl': outtmpl_path,
             }
-
-    def __Process(self)->None:
-        print("Processing...")
-         
+        
     def __UrlConfig(self)->None:
         fixed_urls = []
         for url in self.urls:
@@ -44,12 +40,21 @@ class Downloader:
             self.__UrlConfig()
             with yt_dlp.YoutubeDL(self.format) as video:
                 video.download(self.urls)
-            
+            if os.name =='posix':
+                self.ReScanMedia()
         except yt_dlp.utils.DownloadError as e:
             print(f"Error :{e}")
-
+    
+    def ReScanMedia(self):
+        for filename in os.listdir(self.downloads_path):
+            file_path = os.path.join(self.downloads_path, filename)
+            if os.path.isfile(file_path):
+                os.system(f"am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d file://{file_path}")
+                print(f"Scanned: {file_path}")
 
  
+
+
 def main()->None:
     urls = []
     print("Enter YouTube URLs (type '0' to finish):" )
@@ -74,10 +79,11 @@ def main()->None:
     else:
         videos =Downloader(urls)
         videos.YT_Download()
-        time.sleep(5)
         print("\tNow check the 'Downloads' folder for results")
 
     
 if __name__ =="__main__":
     print("~~Starting~~")
     main()
+
+
